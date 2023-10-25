@@ -132,6 +132,17 @@ app.get("/username", function (req, res) {
     });
 });
 
+// Make a get request for the access token
+
+app.get("/accesstoken", function (req, res) {
+  try {
+    res.json({ access_token });
+  } catch (error) {
+    console.error(error, "An error occurred getting the access token.");
+  }
+  
+});
+
 // const setupMiddleWare = (app) => {
 //   console.log("Setting up middleware...");
 //   app.use(
