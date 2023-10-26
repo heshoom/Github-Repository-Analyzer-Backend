@@ -20,6 +20,7 @@ router.get("/repo", async (req, res) => {
 
 router.get("/:username", async (req, res) => {
   const githubUsername = req.params.username;
+  const token = process.env.TOKEN;
   if (githubUsername === null) {
     // If usernameResponse is not set, handle it gracefully
     res.status(500).send("Username is not available.");
@@ -29,9 +30,16 @@ router.get("/:username", async (req, res) => {
   try {
     //console.log("usernameResponse:", githubUsername);
     // Use the username from usernameResponse to make the request
-    const { data } = await axios.get(
-      `https://api.github.com/users/${githubUsername}/repos`
-    );
+    // const { data } = await axios.get(
+    //   `https://api.github.com/users/${githubUsername}/repos`, {headers}
+    // );
+    const { data } = await axios({
+      method: "get",
+      url: `https://api.github.com/users/${githubUsername}/repos`,
+      headers: {
+        Authorization: "token " + token,
+      },
+  })
     res.send(data);
   } catch (error) {
     // Handle the error, log it, and send an appropriate response
