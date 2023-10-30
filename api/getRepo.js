@@ -18,6 +18,7 @@ router.get("/repo", async (req, res) => {
   }
 });
 
+// Make a get request for all of the repositories for the user
 router.get("/:username", async (req, res) => {
   const githubUsername = req.params.username;
   const token = process.env.TOKEN;
@@ -48,4 +49,37 @@ router.get("/:username", async (req, res) => {
   }
 });
 
+/**
+ * get a requested repo
+ * params
+ * user - current user's gitHub userName
+ * owner - repo owner
+ * reqrepo - name of the repo
+ */
+
+router.get("/:owner/:reqrepo", async (req, res, next) => {
+  const { owner, reqrepo } = req.params;
+  // const header = await accessTokenToHeader(req.headers.authorization, owner);
+  const token = process.env.TOKEN;
+
+  try {
+    const response = await axios({
+      method: "get",
+      url: `https://api.github.com/repos/${owner}/${reqrepo}`,
+      headers: {
+        Authorization: `token ${token}`,
+      },
+    });
+
+    if (response.data) {
+      res.status(200).json(response.data);
+    } else {
+      res.status(404).send("Not found");
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
+

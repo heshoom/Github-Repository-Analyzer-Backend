@@ -6,9 +6,8 @@ const username = 'heshoom';
 const token = process.env.TOKEN;
 
 axios.get('https://api.github.com/rate_limit', {
-  auth: {
-    username: username,
-    password: token,
+  headers: {
+    Authorization: "token " + token,
   },
 })
 .then((response) => {
