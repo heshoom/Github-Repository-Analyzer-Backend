@@ -1,7 +1,13 @@
+const { Octokit } = require("@octokit/rest");
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 require("dotenv").config();
+
+//Authenticated requests
+const octokit = new Octokit({
+  auth: process.env.TOKEN,
+});
 
 // Initialize usernameResponse as null
 let usernameResponse = null;
@@ -40,7 +46,7 @@ router.get("/:username", async (req, res) => {
       headers: {
         Authorization: "token " + token,
       },
-  })
+    });
     res.send(data);
   } catch (error) {
     // Handle the error, log it, and send an appropriate response
@@ -82,4 +88,3 @@ router.get("/:owner/:reqrepo", async (req, res, next) => {
 });
 
 module.exports = router;
-
