@@ -53,38 +53,92 @@ router.get("/:owner/:repo", async (req, res) => {
     allPullRequestsInfo.sort((a, b) => b.created_at - a.created_at);
 
     // Calculate the total average merge time
-    const totalMergeTimeInMilliseconds = allPullRequestsInfo.reduce((total, pullRequest) => {
-      const mergeDate = pullRequest.merged_at;
-      const createDate = pullRequest.created_at;
-      const mergeTimeInMilliseconds = mergeDate - createDate;
-      return total + mergeTimeInMilliseconds;
-    }, 0);
+    const totalMergeTimeInMilliseconds = allPullRequestsInfo.reduce(
+      (total, pullRequest) => {
+        const mergeDate = pullRequest.merged_at;
+        const createDate = pullRequest.created_at;
+        const mergeTimeInMilliseconds = mergeDate - createDate;
+        return total + mergeTimeInMilliseconds;
+      },
+      0
+    );
 
-    const averageMergeTimeInMinutes = totalMergeTimeInMilliseconds / allPullRequestsInfo.length / 1000 / 60;
-    const averageMergeTimeDays = Math.floor(averageMergeTimeInMinutes / (60 * 24));
-    const averageMergeTimeHours = Math.floor((averageMergeTimeInMinutes % (60 * 24)) / 60);
+    const averageMergeTimeInMinutes =
+      totalMergeTimeInMilliseconds / allPullRequestsInfo.length / 1000 / 60;
+    const averageMergeTimeDays = Math.floor(
+      averageMergeTimeInMinutes / (60 * 24)
+    );
+    const averageMergeTimeHours = Math.floor(
+      (averageMergeTimeInMinutes % (60 * 24)) / 60
+    );
     const averageMergeTimeMinutes = Math.floor(averageMergeTimeInMinutes % 60);
 
     // Get the newest 5 pull requests
     const newest5PullRequests = allPullRequestsInfo.slice(0, 5);
 
-    // Calculate the average merge time for the newest 5 pull requests
-    const averageMergeTimesForNewest5 = newest5PullRequests.map((pullRequest) => {
-      const mergeDate = pullRequest.merged_at;
-      const createDate = pullRequest.created_at;
-      const mergeTimeInMilliseconds = mergeDate - createDate;
-      const mergeTimeInMinutes = mergeTimeInMilliseconds / 1000 / 60;
-      const mergeTimeDays = Math.floor(mergeTimeInMinutes / (60 * 24));
-      const mergeTimeHours = Math.floor((mergeTimeInMinutes % (60 * 24)) / 60);
-      const mergeTimeMinutes = Math.floor(mergeTimeInMinutes % 60);
+    const latest30PullRequests = allPullRequestsInfo.slice(0, 30);
 
-      return {
-        number: pullRequest.number,
-        days: mergeTimeDays,
-        hours: mergeTimeHours,
-        minutes: mergeTimeMinutes,
-      };
-    });
+    // Calculate the average merge time for the newest 30 pull requests
+    const averageMergeTimeInMinutesForLatest30 = latest30PullRequests.map(
+      (pullRequest) => {
+        const mergeDate = new Date(pullRequest.merged_at);
+        const createDate = new Date(pullRequest.created_at);
+        const mergeTimeInMilliseconds = mergeDate - createDate;
+        const mergeTimeInMinutes = mergeTimeInMilliseconds / 1000 / 60;
+        const mergeTimeDays = Math.floor(mergeTimeInMinutes / (60 * 24));
+        const mergeTimeHours = Math.floor(
+          (mergeTimeInMinutes % (60 * 24)) / 60
+        );
+        const mergeTimeMinutes = Math.floor(mergeTimeInMinutes % 60);
+
+        return {
+          number: pullRequest.number,
+          days: mergeTimeDays,
+          hours: mergeTimeHours,
+          minutes: mergeTimeMinutes,
+        };
+      }
+    );
+    // Calculate the average merge time
+    const totalMergeTimeInMinutes = averageMergeTimeInMinutesForLatest30.reduce(
+      (acc, pr) => acc + pr.days * 24 * 60 + pr.hours * 60 + pr.minutes,
+      0
+    );
+    const averageMergeTimeInMin =
+      totalMergeTimeInMinutes / latest30PullRequests.length;
+
+    // Convert average merge time to days, hours, and minutes
+    const averageDays = Math.floor(averageMergeTimeInMin / (60 * 24));
+    const averageHours = Math.floor((averageMergeTimeInMin % (60 * 24)) / 60);
+    const averageMinutes = Math.floor(averageMergeTimeInMin % 60);
+
+    const AMTIML30 = {
+      days: averageDays,
+      hours: averageHours,
+      minutes: averageMinutes,
+    };
+
+    // Calculate the average merge time for the newest 5 pull requests
+    const averageMergeTimesForNewest5 = newest5PullRequests.map(
+      (pullRequest) => {
+        const mergeDate = pullRequest.merged_at;
+        const createDate = pullRequest.created_at;
+        const mergeTimeInMilliseconds = mergeDate - createDate;
+        const mergeTimeInMinutes = mergeTimeInMilliseconds / 1000 / 60;
+        const mergeTimeDays = Math.floor(mergeTimeInMinutes / (60 * 24));
+        const mergeTimeHours = Math.floor(
+          (mergeTimeInMinutes % (60 * 24)) / 60
+        );
+        const mergeTimeMinutes = Math.floor(mergeTimeInMinutes % 60);
+
+        return {
+          number: pullRequest.number,
+          days: mergeTimeDays,
+          hours: mergeTimeHours,
+          minutes: mergeTimeMinutes,
+        };
+      }
+    );
 
     res.json({
       averageMergeTime: {
@@ -94,14 +148,12 @@ router.get("/:owner/:repo", async (req, res) => {
           minutes: averageMergeTimeMinutes,
         },
         newest5: averageMergeTimesForNewest5,
+        latest30PullRequests: AMTIML30,
       },
     });
   } catch (error) {
     res.status(500).json({ error: "Error calculating average merge time." });
   }
 });
-
-
-
 
 module.exports = router;
