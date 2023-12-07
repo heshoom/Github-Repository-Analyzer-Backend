@@ -49,7 +49,10 @@ router.get("/:owner/:repo", async (req, res) => {
       page++;
     }
 
-    // Calculate the average merge time in days, hours, and minutes format
+    // Sort the pull requests by creation date (newest to oldest)
+    allPullRequestsInfo.sort((a, b) => b.created_at - a.created_at);
+
+    // Calculate the total average merge time
     const totalMergeTimeInMilliseconds = allPullRequestsInfo.reduce((total, pullRequest) => {
       const mergeDate = pullRequest.merged_at;
       const createDate = pullRequest.created_at;
@@ -62,17 +65,42 @@ router.get("/:owner/:repo", async (req, res) => {
     const averageMergeTimeHours = Math.floor((averageMergeTimeInMinutes % (60 * 24)) / 60);
     const averageMergeTimeMinutes = Math.floor(averageMergeTimeInMinutes % 60);
 
+    // Get the newest 5 pull requests
+    const newest5PullRequests = allPullRequestsInfo.slice(0, 5);
+
+    // Calculate the average merge time for the newest 5 pull requests
+    const averageMergeTimesForNewest5 = newest5PullRequests.map((pullRequest) => {
+      const mergeDate = pullRequest.merged_at;
+      const createDate = pullRequest.created_at;
+      const mergeTimeInMilliseconds = mergeDate - createDate;
+      const mergeTimeInMinutes = mergeTimeInMilliseconds / 1000 / 60;
+      const mergeTimeDays = Math.floor(mergeTimeInMinutes / (60 * 24));
+      const mergeTimeHours = Math.floor((mergeTimeInMinutes % (60 * 24)) / 60);
+      const mergeTimeMinutes = Math.floor(mergeTimeInMinutes % 60);
+
+      return {
+        number: pullRequest.number,
+        days: mergeTimeDays,
+        hours: mergeTimeHours,
+        minutes: mergeTimeMinutes,
+      };
+    });
+
     res.json({
       averageMergeTime: {
-        days: averageMergeTimeDays,
-        hours: averageMergeTimeHours,
-        minutes: averageMergeTimeMinutes,
+        total: {
+          days: averageMergeTimeDays,
+          hours: averageMergeTimeHours,
+          minutes: averageMergeTimeMinutes,
+        },
+        newest5: averageMergeTimesForNewest5,
       },
     });
   } catch (error) {
     res.status(500).json({ error: "Error calculating average merge time." });
   }
 });
+
 
 
 

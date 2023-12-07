@@ -4,8 +4,9 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const db = require("./db");
+const http = require("http");
 require("dotenv").config();
-
 app.use(cors());
 app.set("view engine", "ejs");
 const port = process.env.PORT || 2400;
@@ -165,17 +166,23 @@ app.get("/accesstoken", function (req, res) {
 
 const setupRoutes = (app) => {
   app.use("/api", require("./api"));
+  //app.use("/db", require("./db"));
   //app.use("/views", require("./views"));
 };
 
 const startServer = async (app, port) => {
-  //await sessionStore.sync();
-  //await db.sync({ force: false });
-  app.listen(port, () => console.log(`Server is on port:${port}`));
-  return app;
+  // //await sessionStore.sync();
+  // //await db.sync({ force: false });
+  // app.listen(port, () => console.log(`Server is on port:${port}`));
+  // return app;
+  await db.sync();
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
+    return app;
 };
 
-const configureApp = async () => {
+const configureApp = async (port) => {
   // setupMiddleWare(app);
   setupRoutes(app);
   return await startServer(app, port);
