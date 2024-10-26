@@ -2,7 +2,7 @@
 
 const { Sequelize } = require('sequelize');
 
-const db = new Sequelize('github_repo', 'heshamsharafaldin', 'qazwsx', {
+const db = new Sequelize('github_repo', 'postgres', 'qazwsx', {
   host: 'localhost',
   dialect: 'postgres',
 });

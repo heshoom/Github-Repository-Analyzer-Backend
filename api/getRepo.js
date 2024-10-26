@@ -15,7 +15,7 @@ let usernameResponse = null;
 router.get("/repo", async (req, res) => {
   try {
     // Make a request to get the username
-    usernameResponse = await axios.get("http://localhost:2400/username");
+    usernameResponse = await axios.get("https://github-repository-analyzer-backend.vercel.app/username");
     res.redirect("/fetchrepo"); // Redirect to the /fetchrepo route
   } catch (error) {
     // Handle the error, log it, and send an appropriate response
