@@ -5,9 +5,17 @@ const axios = require("axios");
 require("dotenv").config();
 
 //Authenticated requests
-const octokit = new Octokit({
-  auth: process.env.TOKEN,
-});
+async function getAuthenticatedOctokit() {
+  const { createOAuthAppAuth } = await import("@octokit/auth-oauth-app");
+  
+  return new Octokit({
+    authStrategy: createOAuthAppAuth,
+    auth: {
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+    },
+  });
+}
 
 // Initialize usernameResponse as null
 let usernameResponse = null;
@@ -15,7 +23,7 @@ let usernameResponse = null;
 router.get("/repo", async (req, res) => {
   try {
     // Make a request to get the username
-    usernameResponse = await axios.get("https://github-repository-analyzer-backend.vercel.app/username");
+    usernameResponse = await axios.get("https://github-repository-analyzer-backend.vercel.app/gitLogin/username");
     res.redirect("/fetchrepo"); // Redirect to the /fetchrepo route
   } catch (error) {
     // Handle the error, log it, and send an appropriate response
@@ -27,31 +35,23 @@ router.get("/repo", async (req, res) => {
 // Make a get request for all of the repositories for the user
 router.get("/:username", async (req, res) => {
   const githubUsername = req.params.username;
-  const token = process.env.TOKEN;
-  if (githubUsername === null) {
-    // If usernameResponse is not set, handle it gracefully
-    res.status(500).send("Username is not available.");
-    return;
+
+  if (!githubUsername) {
+    return res.status(400).send("Username is required.");
   }
 
   try {
-    //console.log("usernameResponse:", githubUsername);
-    // Use the username from usernameResponse to make the request
-    // const { data } = await axios.get(
-    //   `https://api.github.com/users/${githubUsername}/repos`, {headers}
-    // );
-    const { data } = await axios({
-      method: "get",
-      url: `https://api.github.com/users/${githubUsername}/repos`,
-      headers: {
-        Authorization: "token " + token,
-      },
+    // Fetch the repositories for the user
+    const appOctokit = await getAuthenticatedOctokit();
+    const response = await appOctokit.repos.listForUser({
+      username: githubUsername,
     });
-    res.send(data);
+
+    // Send back the repository data
+    res.status(200).json(response.data);
   } catch (error) {
-    // Handle the error, log it, and send an appropriate response
-    console.error("Error at /:username:", error.message);
-    res.status(500).send("An error occurred.");
+    console.error("Error fetching repositories:", error);
+    res.status(500).send("Failed to fetch repositories.");
   }
 });
 
